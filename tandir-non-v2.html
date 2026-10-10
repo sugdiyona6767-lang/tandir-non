@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TANDIR NON</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo: #0d2758;
+    --indigo-2: #173a7a;
+    --cream: #fbf1dc;
+    --paper: #f6e7c1;
+    --gold: #e8b25c;
+    --ink: #3b2314;
+    --turq: #5fe0d2;
+    --terra: #c8553d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    background: var(--indigo);
+    color: var(--paper);
+    overflow-x: hidden;
+  }
+
+  /* ===== Первый экран: 3D-лепёшка ===== */
+  .hero {
+    position: relative;
+    height: 100vh;
+    height: 100svh;
+    min-height: 620px;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, #1d4b92 0%, #0d2758 45%, #050e22 100%);
+  }
+  #pattern {
+    --s: 300px;
+    position: absolute;
+    left: 0; top: 0;
+    pointer-events: none;
+    opacity: .5;
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, transparent 18%, #000 72%);
+            mask-image: radial-gradient(circle at 50% 45%, transparent 18%, #000 72%);
+    animation: drift 90s linear infinite;
+    will-change: transform;
+  }
+  @keyframes drift {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(var(--s), var(--s)); }
+  }
+  .vignette {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(3, 8, 22, .85) 100%);
+  }
+  #stage { position: absolute; inset: 0; z-index: 2; }
+  #stage canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }
+  #stage canvas:active { cursor: grabbing; }
+  .frame {
+    position: absolute; inset: 14px; z-index: 3; pointer-events: none;
+    border: 1px solid rgba(232, 178, 92, .38); border-radius: 6px;
+    animation: fade 2s ease both;
+  }
+  .frame i { position: absolute; width: 12px; height: 12px; background: var(--gold); transform: rotate(45deg); }
+  .frame i:nth-child(1) { left: -7px;  top: -7px; }
+  .frame i:nth-child(2) { right: -7px; top: -7px; }
+  .frame i:nth-child(3) { left: -7px;  bottom: -7px; }
+  .frame i:nth-child(4) { right: -7px; bottom: -7px; }
+  .brand {
+    position: absolute; z-index: 4; left: 0; right: 0;
+    top: clamp(34px, 7vh, 70px);
+    text-align: center; pointer-events: none;
+    animation: fadeDown 1.8s ease both;
+  }
+  .title {
+    font-weight: 700;
+    font-size: clamp(30px, 6.4vw, 66px);
+    letter-spacing: .34em; text-indent: .34em;
+    color: #f3d28a;
+    text-shadow: 0 0 22px rgba(232, 178, 92, .45);
+  }
+  .title span { color: var(--turq); text-shadow: 0 0 22px rgba(63, 210, 196, .45); }
+  .rule { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; }
+  .rule::before, .rule::after {
+    content: ""; width: clamp(60px, 12vw, 120px); height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold));
+  }
+  .rule::after { background: linear-gradient(270deg, transparent, var(--gold)); }
+  .rule b { width: 8px; height: 8px; background: var(--turq); transform: rotate(45deg); box-shadow: 0 0 10px var(--turq); }
+  .tag {
+    position: absolute; z-index: 4; left: 0; right: 0; bottom: 112px;
+    text-align: center; font-style: italic; font-weight: 500;
+    font-size: clamp(18px, 2.4vw, 26px); letter-spacing: .08em;
+    pointer-events: none;
+    animation: fadeUp 2s .6s ease both; 
+  }
+  .cue {
+    position: absolute; z-index: 4; left: 50%; bottom: 26px;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--gold); text-decoration: none;
+    font-size: 15px; letter-spacing: .24em; text-transform: uppercase;
+    animation: fadeUp 2s 1s ease both;
+  }
+  .cue span { font-size: 22px; animation: bob 1.8s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+  .notice { position: absolute; z-index: 5; left: 0; right: 0; top: 50%; text-align: center; font-size: 18px; opacity: .85; }
+
+  /* ===== Полосы-орнаменты по краям секций ===== */
+  .band {
+    position: absolute; left: 0; right: 0; height: 36px;
+    background-repeat: repeat-x; background-size: 160px 36px;
+    pointer-events: none;
+  }
+  .band.top { top: 0; }
+  .band.bottom { bottom: 0; }
+
+  /* ===== Прокручиваемые секции ===== */
+  .sec { position: relative; padding: clamp(80px, 10vw, 130px) clamp(22px, 7vw, 110px); }
+  .paper-sec { background: var(--cream); color: var(--ink); }
+  .deep-sec { background: var(--indigo-2); color: var(--paper); }
+  .night-sec { background: var(--indigo); color: var(--paper); }
+  .eyebrow { font-size: 15px; letter-spacing: .32em; text-transform: uppercase; font-weight: 700; color: var(--terra); }
+  .deep-sec .eyebrow, .night-sec .eyebrow { color: var(--gold); }
+  h2 { font-size: clamp(34px, 4.6vw, 60px); line-height: 1.08; font-weight: 700; margin: 12px 0 20px; max-width: 18em; }
+  .lead { font-size: clamp(19px, 1.7vw, 23px); line-height: 1.6; max-width: 38em; }
+  .lead + .lead { margin-top: 18px; }
+  .split { display: grid; grid-template-columns: 1.1fr .9fr; gap: clamp(30px, 6vw, 90px); align-items: center; max-width: 1200px; margin: 0 auto; }
+  .medal { width: min(440px, 78vw); height: min(440px, 78vw); margin: 0 auto; animation: spin 90s linear infinite; }
+  .medal.small { width: min(300px, 70vw); height: min(300px, 70vw); }
+  .medal svg { width: 100%; height: 100%; display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 26px; max-width: 1200px; margin: 44px auto 0; }
+  .item { border-radius: 24px; padding: 22px; }
+  .item h3 { font-size: 30px; margin: 16px 0 8px; }
+  .item p { font-size: 19px; line-height: 1.5; }
+  .paper-item { background: #fffaf0; border: 2px solid #e6c98f; box-shadow: 0 14px 30px rgba(59, 35, 20, .12); color: var(--ink); }
+  .paper-item h3 { color: var(--indigo); }
+  .night-item { background: linear-gradient(160deg, #173a7a, #0d2758); border: 1px solid rgba(232, 178, 92, .45); color: var(--paper); }
+  .night-item h3 { color: #f3d28a; }
+  .tile { border-radius: 18px; padding: 16px; background: var(--indigo-2); border: 2px solid rgba(232, 178, 92, .5); }
+  .tile svg { width: 100%; height: auto; display: block; }
+  .quote { text-align: center; }
+  .quote .big { font-size: clamp(26px, 3.2vw, 44px); font-style: italic; line-height: 1.35; max-width: 26em; margin: 0 auto; }
+  .final { position: relative; text-align: center; padding: 100px 22px 90px; background: #061636; }
+  .final .title { font-size: clamp(28px, 5vw, 52px); }
+  .xush { font-size: clamp(24px, 3vw, 34px); color: var(--gold); margin-top: 16px; }
+  .small-note { font-size: 16px; opacity: .7; margin-top: 18px; }
+
+  /* Появление блоков при прокрутке (работает только когда включён JS) */
+  .js .reveal { opacity: 0; transform: translateY(26px); transition: opacity 1s ease, transform 1s ease; }
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 800px) {
+    .split { grid-template-columns: 1fr; }
+    .brand { top: 28px; }
+    .tag { bottom: 100px; }
+  }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(18px); }  to { opacity: 1; transform: none; } }
+  @keyframes fade     { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<section class="hero" id="hero">
+  <canvas id="pattern"></canvas>
+  <div class="vignette"></div>
+  <div id="stage"></div>
+  <div class="frame"><i></i><i></i><i></i><i></i></div>
+  <header class="brand">
+    <div class="title">TANDIR <span>NON</span></div>
+    <div class="rule"><b></b></div>
+  </header>
+  <p class="tag">Tandirda pishgan issiq non</p>
+  <a class="cue" href="#tandir">Davom eting <span>↓</span></a>
+  <div class="notice" id="notice" hidden>3D ko'rinish uchun internet kerak</div>
+</section>
+
+<section class="sec paper-sec" id="tandir">
+  <div class="band top" data-band="light"></div>
+  <div class="split">
+    <div class="reveal">
+      <div class="eyebrow">Tandir</div>
+      <h2>Olov, loy va sabr</h2>
+      <p class="lead">Tandir — loy devorli chuqur o'choq. Non shu yerda, qizigan devorga yopishtirib pishiriladi. Har bir non qo'lda yasaladi va muhr naqshi bilan bezatiladi.</p>
+    </div>
+    <div class="reveal"><div class="medal" data-motif="suzani" data-theme="medal"></div></div>
+  </div>
+</section>
+
+<section class="sec deep-sec" id="turlar">
+  <div class="band top" data-band="dark"></div>
+  <div class="eyebrow">Non turlari</div>
+  <h2>Har bir nonning o'z hikoyasi bor</h2>
+  <div class="grid">
+    <article class="item paper-item reveal">
+      <div class="tile" data-motif="suzani" data-theme="card"></div>
+      <h3>Obi non</h3>
+      <p>Tandir devoriga yopishtirib pishiriladi, ustiga muhr bosiladi.</p>
+    </article>
+    <article class="item paper-item reveal">
+      <div class="tile" data-motif="gul" data-theme="card"></div>
+      <h3>Patir</h3>
+      <p>Yupqa qatlamlari bilan mashhur, yumaloq shaklda.</p>
+    </article>
+    <article class="item paper-item reveal">
+      <div class="tile" data-motif="adras" data-theme="card"></div>
+      <h3>Qatlama</h3>
+      <p>Qatlam-qatlam xamirdan tayyorlanadi.</p>
+    </article>
+    <article class="item paper-item reveal">
+      <div class="tile" data-motif="bodom" data-theme="card"></div>
+      <h3>Somsa</h3>
+      <p>Go'shtli va sershira, tandirda pishadi.</p>
+    </article>
+  </div>
+</section>
+
+<section class="sec night-sec" id="naqsh">
+  <div class="band top" data-band="dark"></div>
+  <div class="eyebrow">Naqsh</div>
+  <h2>Ota-bobolarimizning naqshlari</h2>
+  <div class="grid">
+    <article class="item night-item reveal">
+      <div class="tile" data-motif="suzani" data-theme="card"></div>
+      <h3>Suzani</h3>
+      <p>Gul bezakli doira shakldagi naqsh, kashta bilan ishlanadi.</p>
+    </article>
+    <article class="item night-item reveal">
+      <div class="tile" data-motif="bodom" data-theme="card"></div>
+      <h3>Bodom</h3>
+      <p>Tomchi shaklidagi, O'zbek naqshida keng tarqalgan motiv.</p>
+    </article>
+    <article class="item night-item reveal">
+      <div class="tile" data-motif="gul" data-theme="card"></div>
+      <h3>Gul</h3>
+      <p>Naqshning asosiy mavzularidan biri.</p>
+    </article>
+    <article class="item night-item reveal">
+      <div class="tile" data-motif="chinor" data-theme="card"></div>
+      <h3>Chinor</h3>
+      <p>Chinor daraxti yaprog'i, O'zbek bog'laridagi mashhur daraxt.</p>
+    </article>
+    <article class="item night-item reveal">
+      <div class="tile" data-motif="qochqor" data-theme="card"></div>
+      <h3>Qo'chqor shoxi</h3>
+      <p>Burama shakl, naqshlarda ko'p uchraydi.</p>
+    </article>
+    <article class="item night-item reveal">
+      <div class="tile" data-motif="adras" data-theme="card"></div>
+      <h3>Adras</h3>
+      <p>Zigzag chiziqlar, Marg'ilon adrasi matosining naqshi.</p>
+    </article>
+  </div>
+</section>
+
+<section class="sec paper-sec" id="dasturxon">
+  <div class="band top" data-band="light"></div>
+  <div class="split">
+    <div class="reveal">
+      <div class="eyebrow">Mehmondo'stlik</div>
+      <h2>Non va tuz</h2>
+      <p class="lead">Mehmon kelganda avval non va tuz taklif qilinadi. Bu — mehmondo'stlik va xush kelibsiz degani.</p>
+      <p class="lead">Dasturxonda non odatda o'rtada turadi, uni hurmat bilan ushlaymiz.</p>
+    </div>
+    <div class="reveal"><div class="medal small" data-motif="gul" data-theme="medal"></div></div>
+  </div>
+</section>
+
+<section class="sec deep-sec quote" id="hurmat">
+  <div class="reveal">
+    <div class="eyebrow">Hurmat</div>
+    <p class="big">Non — mehnat, sabr va mehmondo'stlik ramzi. Nonni yerga tashlamaslik — odob.</p>
+  </div>
+</section>
+
+<footer class="final">
+  <div class="band bottom" data-band="dark"></div>
+  <div class="title">TANDIR <span>NON</span></div>
+  <p class="xush">Xush kelibsiz!</p>
+  <p class="small-note">© 2026 · Tandirda pishgan issiq non</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  document.documentElement.classList.add('js');
+
+  const TAU = Math.PI * 2;
+  const DEG = 180 / Math.PI;
+
+  /* ================= МОТИВЫ УЗБЕКСКОГО ОРНАМЕНТА =================
+     Примитивы: e — эллипс, c — круг, p — путь (SVG d), g — группа (сдвиг, поворот, масштаб).
+     k: 'fill' — заливка, 'line' — контур. Одни и те же данные рисуются и на canvas, и в SVG. */
+  const M = {
+    // бодом: миндалевидная капля с внутренним контуром
+    bodom() {
+      return [
+        { t: 'p', k: 'fill', d: 'M0,-50 C24,-34 34,-8 28,14 C23,32 12,42 0,42 C-12,42 -23,32 -28,14 C-34,-8 -24,-34 0,-50 Z' },
+        { t: 'p', k: 'line', d: 'M0,-34 C14,-22 19,-6 16,8 C13,20 6,26 0,26 C-6,26 -13,20 -16,8 C-19,-6 -14,-22 0,-34 Z' },
+        { t: 'c', k: 'fill', x: 0, y: -38, r: 3.5 }
+      ];
+    },
+    // гул: восьмилепестковый цветок
+    gul() {
+      const p = [];
+      for (let i = 0; i < 8; i++) {
+        const a = i * TAU / 8;
+        p.push({ t: 'e', k: 'fill', x: Math.cos(a) * 24, y: Math.sin(a) * 24, rx: 20, ry: 9, r: a });
+      }
+      p.push({ t: 'c', k: 'line', x: 0, y: 0, r: 44 });
+      p.push({ t: 'c', k: 'fill', x: 0, y: 0, r: 9 });
+      return p;
+    },
+    // чинор: лист платана из пяти долей
+    chinor() {
+      const p = [];
+      [-90, -128, -52, -162, -18].forEach((deg) => {
+        const a = deg / DEG;
+        p.push({ t: 'e', k: 'fill', x: Math.cos(a) * 22, y: Math.sin(a) * 22, rx: 24, ry: 11, r: a });
+      });
+      p.push({ t: 'p', k: 'line', d: 'M0,8 L0,-42' });
+      p.push({ t: 'p', k: 'line', d: 'M0,26 L0,48' });
+      return p;
+    },
+    // qo'chqor shoxi: две симметричные спирали
+    qochqor() {
+      const spiral = (sg) => {
+        let d = '';
+        for (let i = 0; i <= 90; i++) {
+          const t = i / 90;
+          const th = t * 3.4 * Math.PI;
+          const r = 4 + 42 * t;
+          d += (i === 0 ? 'M' : 'L') + (sg * Math.cos(th) * r).toFixed(1) + ',' + (Math.sin(th) * r).toFixed(1);
+        }
+        return d;
+      };
+      return [
+        { t: 'p', k: 'line', d: spiral(1) },
+        { t: 'p', k: 'line', d: spiral(-1) }
+      ];
+    },
+    // адрас: зигзаг-полосы
+    adras() {
+      const p = [];
+      for (let k = -3; k <= 3; k++) {
+        const y0 = k * 14;
+        let d = '';
+        for (let i = 0; i <= 10; i++) {
+          d += (i === 0 ? 'M' : 'L') + (-50 + i * 10) + ',' + (y0 + (i % 2 ? -6 : 6));
+        }
+        p.push({ t: 'p', k: 'line', d: d });
+      }
+      return p;
+    },
+    // сузани: круглый медальон из бодомов вокруг гула
+    suzani() {
+      const p = [{ t: 'c', k: 'line', x: 0, y: 0, r: 56 }];
+      for (let i = 0; i < 12; i++) {
+        const a = i * TAU / 12;
+        p.push({ t: 'g', x: Math.cos(a) * 36, y: Math.sin(a) * 36, r: a + Math.PI / 2, s: 0.38, ch: M.bodom() });
+      }
+      p.push({ t: 'g', x: 0, y: 0, r: 0, s: 0.5, ch: M.gul() });
+      return p;
+    }
+  };
+
+  /* ================= ОТРИСОВКА МОТИВОВ ================= */
+  function drawPrims(ctx, prims, pal) {
+    for (const p of prims) {
+      if (p.t === 'g') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.scale(p.s, p.s);
+        drawPrims(ctx, p.ch, pal);
+        ctx.restore();
+        continue;
+      }
+      let path;
+      if (p.t === 'p') {
+        path = new Path2D(p.d);
+      } else {
+        path = new Path2D();
+        if (p.t === 'e') path.ellipse(p.x, p.y, p.rx, p.ry, p.r, 0, TAU);
+        else path.arc(p.x, p.y, p.r, 0, TAU);
+      }
+      if (p.k === 'fill') {
+        if (pal.fill) { ctx.fillStyle = pal.fill; ctx.fill(path); }
+      } else if (pal.line) {
+        ctx.strokeStyle = pal.line;
+        ctx.lineWidth = pal.lw;
+        ctx.stroke(path);
+      }
+    }
+  }
+
+  function primsSVG(prims, pal) {
+    let out = '';
+    for (const p of prims) {
+      if (p.t === 'g') {
+        out += '<g transform="translate(' + p.x + ' ' + p.y + ') rotate(' + (p.r * DEG).toFixed(2) +
+               ') scale(' + p.s + ')">' + primsSVG(p.ch, pal) + '</g>';
+        continue;
+      }
+      const attrs = p.k === 'fill'
+        ? 'fill="' + pal.fill + '" stroke="none"'
+        : 'fill="none" stroke="' + pal.line + '" stroke-width="' + pal.lw + '" stroke-linecap="round" stroke-linejoin="round"';
+      if (p.t === 'e') {
+        out += '<ellipse cx="' + p.x + '" cy="' + p.y + '" rx="' + p.rx + '" ry="' + p.ry +
+               '" transform="rotate(' + (p.r * DEG).toFixed(2) + ' ' + p.x + ' ' + p.y + ')" ' + attrs + '/>';
+      } else if (p.t === 'c') {
+        out += '<circle cx="' + p.x + '" cy="' + p.y + '" r="' + p.r + '" ' + attrs + '/>';
+      } else {
+        out += '<path d="' + p.d + '" ' + attrs + '/>';
+      }
+    }
+    return out;
+  }
+
+  function motifSVG(prims, pal) {
+    return '<svg viewBox="-60 -60 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+           primsSVG(prims, pal) + '</svg>';
+  }
+
+  // Палитры: карточки на тёмном, медальон на светлом, полосы на светлом и на тёмном
+  const PAL = {
+    card:  { fill: '#e8b25c', line: '#fff1d0', lw: 2.2 },
+    medal: { fill: '#e8b25c', line: '#1c3a7a', lw: 2.4 },
+    light: { fill: '#c8553d', line: '#1c3a7a', lw: 6 },
+    dark:  { fill: '#e8b25c', line: '#e8b25c', lw: 6 }
+  };
+
+  // Повторяющаяся полоса-орнамент: зигзаги адрас и бодом с гулом
+  function bandURL(pal) {
+    const c = document.createElement('canvas');
+    c.width = 160;
+    c.height = 36;
+    const x = c.getContext('2d');
+    x.strokeStyle = pal.line;
+    x.lineWidth = 2;
+    x.lineJoin = 'round';
+    [5, 31].forEach((y) => {
+      x.beginPath();
+      for (let i = 0; i <= 16; i++) {
+        const px = i * 10, py = y + (i % 2 ? -4 : 4);
+        if (i === 0) x.moveTo(px, py); else x.lineTo(px, py);
+      }
+      x.stroke();
+    });
+    x.save();
+    x.translate(80, 18);
+    x.scale(0.3, 0.3);
+    drawPrims(x, M.bodom(), pal);
+    x.restore();
+    [0, 160].forEach((px) => {
+      x.save();
+      x.translate(px, 18);
+      x.scale(0.2, 0.2);
+      drawPrims(x, M.gul(), pal);
+      x.restore();
+    });
+    return c.toDataURL();
+  }
+
+  /* ================= ФОН ПЕРВОГО ЭКРАНА (2D) ================= */
+  const hero = document.getElementById('hero');
+  const bg = document.getElementById('pattern');
+  const bgCtx = bg.getContext('2d');
+  const CELL = 150, PERIOD = CELL * 2;
+  const BG_GUL = M.gul(), BG_BOD = M.bodom();
+  const BG_PAL_GUL = { fill: 'rgba(63,210,196,0.16)', line: 'rgba(240,190,96,0.6)', lw: 1.8 };
+  const BG_PAL_BOD = { fill: 'rgba(240,190,96,0.12)', line: 'rgba(240,190,96,0.55)', lw: 1.6 };
+
+  function drawBackground() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const W = hero.clientWidth + PERIOD * 2;
+    const H = hero.clientHeight + PERIOD * 2;
+    bg.style.width = W + 'px';
+    bg.style.height = H + 'px';
+    bg.style.left = -PERIOD + 'px';
+    bg.style.top = -PERIOD + 'px';
+    bg.width = Math.round(W * dpr);
+    bg.height = Math.round(H * dpr);
+    bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bgCtx.clearRect(0, 0, W, H);
+    for (let x = 0; x <= W; x += CELL) {
+      for (let y = 0; y <= H; y += CELL) {
+        bgCtx.save();
+        bgCtx.translate(x, y);
+        bgCtx.scale(0.55, 0.55);
+        drawPrims(bgCtx, BG_GUL, BG_PAL_GUL);
+        bgCtx.restore();
+
+        const flip = (Math.round(x / CELL) + Math.round(y / CELL)) % 2 ? Math.PI : 0;
+        bgCtx.save();
+        bgCtx.translate(x + CELL / 2, y + CELL / 2);
+        bgCtx.rotate(flip);
+        bgCtx.scale(0.42, 0.42);
+        drawPrims(bgCtx, BG_BOD, BG_PAL_BOD);
+        bgCtx.restore();
+      }
+    }
+  }
+
+  /* ================= ТЕКСТУРЫ ДЛЯ 3D ================= */
+  function glowTexture(rgb) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 256;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, 'rgba(' + rgb + ',1)');
+    g.addColorStop(0.3, 'rgba(' + rgb + ',0.4)');
+    g.addColorStop(1, 'rgba(' + rgb + ',0)');
+    x.fillStyle = g;
+    x.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(c);
+  }
+
+  // Ореол за лепёшкой: большой медальон сузани с ободом бодомов
+  function haloTexture() {
+    const N = 1024;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = N;
+    const x = cv.getContext('2d');
+    x.translate(N / 2, N / 2);
+    x.scale(7.4, 7.4);
+    const pal = { fill: 'rgba(232,178,92,0.2)', line: 'rgba(245,205,125,1)', lw: 0.8 };
+    drawPrims(x, M.suzani(), pal);
+    for (let i = 0; i < 20; i++) {
+      const a = i * TAU / 20;
+      x.save();
+      x.translate(Math.cos(a) * 66, Math.sin(a) * 66);
+      x.rotate(a + Math.PI / 2);
+      x.scale(0.72, 0.72);
+      drawPrims(x, M.bodom(), pal);
+      x.restore();
+    }
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.globalCompositeOperation = 'destination-in';
+    const g = x.createRadialGradient(N / 2, N / 2, N * 0.2, N / 2, N / 2, N / 2);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(0.72, 'rgba(0,0,0,0.9)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g;
+    x.fillRect(0, 0, N, N);
+    return new THREE.CanvasTexture(cv);
+  }
+
+  // Печать на лепёшке: внешний ряд бодомов, средний ряд чинора, в центре гул,
+  // по краю адрас-зигзаг. Тёмное — углубление, белые контуры — выступы.
+  function breadTexture() {
+    const N = 1024, c = N / 2;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = N;
+    const x = cv.getContext('2d');
+    x.fillStyle = '#ffffff';
+    x.fillRect(0, 0, N, N);
+    for (let i = 0; i < 3000; i++) {
+      x.fillStyle = 'rgba(110,60,25,' + (Math.random() * 0.2) + ')';
+      x.beginPath();
+      x.arc(Math.random() * N, Math.random() * N, 0.5 + Math.random() * 2, 0, TAU);
+      x.fill();
+    }
+    const ink = { fill: 'rgba(98,52,20,0.92)', line: '#ffffff', lw: 3 };
+    const inkLine = 'rgba(98,52,20,0.92)';
+
+    x.save();
+    x.translate(c, c);
+    for (let i = 0; i < 24; i++) {
+      const a = i * TAU / 24;
+      x.save();
+      x.translate(Math.cos(a) * 392, Math.sin(a) * 392);
+      x.rotate(a + Math.PI / 2);
+      x.scale(1.02, 1.02);
+      drawPrims(x, M.bodom(), ink);
+      x.restore();
+    }
+    for (let i = 0; i < 12; i++) {
+      const a = i * TAU / 12;
+      x.save();
+      x.translate(Math.cos(a) * 246, Math.sin(a) * 246);
+      x.rotate(a + Math.PI / 2);
+      x.scale(1.5, 1.5);
+      drawPrims(x, M.chinor(), ink);
+      x.restore();
+    }
+    x.save();
+    x.scale(2.9, 2.9);
+    drawPrims(x, M.gul(), ink);
+    x.restore();
+
+    x.strokeStyle = inkLine;
+    x.lineWidth = 7;
+    x.beginPath();
+    x.arc(0, 0, 326, 0, TAU);
+    x.stroke();
+
+    x.lineWidth = 6;
+    x.beginPath();
+    for (let i = 0; i <= 72; i++) {
+      const a = i * TAU / 72;
+      const rr = i % 2 ? 452 : 470;
+      const px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+      if (i === 0) x.moveTo(px, py); else x.lineTo(px, py);
+    }
+    x.closePath();
+    x.stroke();
+
+    x.fillStyle = inkLine;
+    for (let i = 0; i < 64; i++) {
+      const a = i * TAU / 64;
+      x.beginPath();
+      x.arc(Math.cos(a) * 496, Math.sin(a) * 496, 4, 0, TAU);
+      x.fill();
+    }
+    x.restore();
+    return new THREE.CanvasTexture(cv);
+  }
+
+  const smooth = (e0, e1, v) => {
+    const t = Math.min(1, Math.max(0, (v - e0) / (e1 - e0)));
+    return t * t * (3 - 2 * t);
+  };
+  const easeOutBack = (v) => {
+    const c1 = 1.70158, c3 = c1 + 1;
+    return 1 + c3 * Math.pow(v - 1, 3) + c1 * Math.pow(v - 1, 2);
+  };
+
+  let onResize3D = null;
+
+  /* ================= 3D-СЦЕНА ================= */
+  function init3D() {
+    const stage = document.getElementById('stage');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    stage.appendChild(renderer.domElement);
+
+    // ----- Лепёшка: профиль снизу вверх (дно → край → верх) -----
+    const yTop = (r) => 0.12 + 0.12 * (1 - Math.pow(r, 2.4)) + 0.03 * Math.exp(-Math.pow((r - 0.93) / 0.07, 2));
+    const profile = [];
+    const K = 28;
+    for (let i = 0; i <= K; i++) profile.push(new THREE.Vector2(i / K, 0));
+    for (let k = 1; k < 6; k++) {
+      const f = k / 6;
+      profile.push(new THREE.Vector2(1 + 0.014 * Math.sin(Math.PI * f), f * yTop(1)));
+    }
+    for (let i = K; i >= 0; i--) profile.push(new THREE.Vector2(i / K, yTop(i / K)));
+    const breadGeo = new THREE.LatheGeometry(profile, 110);
+
+    const cCenter = new THREE.Color('#f2b657');
+    const cMid = new THREE.Color('#d88a3c');
+    const cEdge = new THREE.Color('#9b5322');
+    const cCrust = new THREE.Color('#5e2a0f');
+    const pos = breadGeo.attributes.position;
+    const uvAttr = breadGeo.attributes.uv;
+    const colors = new Float32Array(pos.count * 3);
+    const col = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      uvAttr.setXY(i, 0.5 + x / 2, 0.5 + z / 2);
+      const r = Math.min(Math.hypot(x, z), 1.02);
+      col.copy(cCenter)
+         .lerp(cMid, smooth(0, 0.55, r))
+         .lerp(cEdge, smooth(0.6, 0.95, r))
+         .lerp(cCrust, smooth(0.96, 1.01, r));
+      if (y < 0.01) col.multiplyScalar(0.55);
+      col.multiplyScalar(1 + 0.035 * Math.sin(r * 31 + 1.3) * Math.cos(Math.atan2(z, x) * 5));
+      colors[i * 3] = col.r;
+      colors[i * 3 + 1] = col.g;
+      colors[i * 3 + 2] = col.b;
+    }
+    breadGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const breadTex = breadTexture();
+    const breadMat = new THREE.MeshStandardMaterial({
+      map: breadTex, bumpMap: breadTex, bumpScale: 0.6,
+      vertexColors: true, roughness: 0.8, metalness: 0,
+      emissive: new THREE.Color('#2b1205'), emissiveIntensity: 0.4
+    });
+    const bread = new THREE.Mesh(breadGeo, breadMat);
+    bread.castShadow = true;
+    bread.receiveShadow = true;
+
+    // ----- Кунжут и чёрный тмин -----
+    const seedGeo = new THREE.SphereGeometry(1, 8, 6);
+    const sesame = new THREE.InstancedMesh(seedGeo,
+      new THREE.MeshStandardMaterial({ color: 0xf5e7c4, roughness: 0.5 }), 320);
+    const nigella = new THREE.InstancedMesh(seedGeo,
+      new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.6 }), 40);
+    const mtx = new THREE.Matrix4(), quat = new THREE.Quaternion();
+    const vPos = new THREE.Vector3(), vScale = new THREE.Vector3(), eul = new THREE.Euler();
+    function scatter(mesh, count, sx, sy, sz) {
+      for (let i = 0; i < count; i++) {
+        const rr = Math.sqrt(Math.random()) * 0.9;
+        const a = Math.random() * TAU;
+        vPos.set(Math.cos(a) * rr, yTop(rr) - 0.002, Math.sin(a) * rr);
+        eul.set(Math.random() * 0.8, Math.random() * TAU, Math.random() * 0.8);
+        quat.setFromEuler(eul);
+        vScale.set(sx * (0.8 + Math.random() * 0.4), sy, sz * (0.8 + Math.random() * 0.4));
+        mtx.compose(vPos, quat, vScale);
+        mesh.setMatrixAt(i, mtx);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+    scatter(sesame, 320, 0.012, 0.005, 0.008);
+    scatter(nigella, 40, 0.008, 0.006, 0.008);
+
+    const group = new THREE.Group();
+    group.add(bread);
+    group.add(sesame);
+    group.add(nigella);
+    scene.add(group);
+
+    // ----- Пол, тень и тёплое свечение -----
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.ShadowMaterial({ opacity: 0.42 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.8;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const glowMat = new THREE.MeshBasicMaterial({
+      map: glowTexture('255,160,70'), transparent: true, opacity: 0.45,
+      depthWrite: false, blending: THREE.AdditiveBlending
+    });
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4), glowMat);
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = -0.78;
+    scene.add(glow);
+
+    // ----- Свет -----
+    scene.add(new THREE.HemisphereLight(0xfff0d2, 0x0b1f4d, 0.9));
+    const key = new THREE.DirectionalLight(0xffd9a0, 1.6);
+    key.position.set(2.6, 4.2, 3.2);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -2.5;
+    key.shadow.camera.right = 2.5;
+    key.shadow.camera.top = 2.5;
+    key.shadow.camera.bottom = -2.5;
+    key.shadow.camera.near = 1;
+    key.shadow.camera.far = 14;
+    key.shadow.camera.updateProjectionMatrix();
+    key.shadow.bias = -0.0008;
+    scene.add(key);
+    const rim = new THREE.PointLight(0x3fd2c4, 2.2, 14);
+    rim.position.set(-3.2, 1.8, -2.6);
+    scene.add(rim);
+    const warm = new THREE.PointLight(0xff9a4a, 0.6, 4);
+    warm.position.set(0, -0.35, 1.2);
+    scene.add(warm);
+
+    // ----- Ореолы из узора сузани и золотые искры -----
+    const haloTex = haloTexture();
+    const halo1 = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 4.6), new THREE.MeshBasicMaterial({
+      map: haloTex, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending
+    }));
+    halo1.position.set(0, 0.25, -1.5);
+    scene.add(halo1);
+
+    const halo2 = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.2), new THREE.MeshBasicMaterial({
+      map: haloTex, transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending
+    }));
+    halo2.position.set(0, 0.25, -2.4);
+    scene.add(halo2);
+
+    const PN = 150;
+    const pAng = new Float32Array(PN), pRad = new Float32Array(PN);
+    const pY = new Float32Array(PN), pSpd = new Float32Array(PN);
+    const pPos = new Float32Array(PN * 3);
+    const respawn = (i, first) => {
+      pAng[i] = Math.random() * TAU;
+      pRad[i] = 1.25 + Math.random() * 1.5;
+      pY[i] = first ? -0.9 + Math.random() * 2.3 : -0.9;
+      pSpd[i] = 0.08 + Math.random() * 0.18;
+    };
+    for (let i = 0; i < PN; i++) respawn(i, true);
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
+      map: glowTexture('255,214,120'), color: 0xffe08a, size: 0.1,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+    })));
+
+    // ----- Камера: подстраивается под размер первого экрана -----
+    function layout() {
+      const W = stage.clientWidth || innerWidth;
+      const H = stage.clientHeight || innerHeight;
+      const asp = W / H;
+      const d = Math.max(4.4, 4.2 / asp);
+      const el = 36 * Math.PI / 180;
+      renderer.setSize(W, H);
+      camera.aspect = asp;
+      camera.position.set(0, Math.sin(el) * d, Math.cos(el) * d);
+      camera.lookAt(0, 0.05, 0);
+      camera.updateProjectionMatrix();
+    }
+    layout();
+    onResize3D = layout;
+
+    // ----- Видна ли сцена: если прокрутили дальше, не рисуем -----
+    let visible = true;
+    new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; }).observe(hero);
+
+    // ----- Управление: мышь/палец наклоняют, перетаскивание крутит, клик подпрыгивает -----
+    let px = 0, py = 0, rotY = 0, tiltX = 0, tiltZ = 0, squash = 0;
+    let dragging = false, lastX = 0;
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      lastX = e.clientX;
+      squash = 1;
+    });
+    window.addEventListener('pointermove', (e) => {
+      px = (e.clientX / innerWidth) * 2 - 1;
+      py = (e.clientY / innerHeight) * 2 - 1;
+      if (dragging) {
+        rotY += (e.clientX - lastX) * 0.01;
+        lastX = e.clientX;
+      }
+    });
+    const stopDrag = () => { dragging = false; };
+    window.addEventListener('pointerup', stopDrag);
+    window.addEventListener('pointercancel', stopDrag);
+
+    // ----- Анимация -----
+    const clock = new THREE.Clock();
+    let t = 0, intro = 0;
+    function tick() {
+      const dt = Math.min(clock.getDelta(), 0.05);
+      if (visible) {
+        t += dt;
+        intro = Math.min(1, intro + dt / 1.6);
+        const grow = easeOutBack(intro);
+
+        rotY += 0.18 * dt;
+        tiltX += (py * 0.2 - tiltX) * Math.min(1, dt * 3);
+        tiltZ += (px * 0.25 - tiltZ) * Math.min(1, dt * 3);
+        squash *= Math.exp(-dt * 3.5);
+        const sq = squash * 0.07 * Math.sin(t * 22);
+
+        group.position.y = -0.1 + Math.sin(t * 1.1) * 0.06;
+        group.rotation.set(tiltX, rotY, tiltZ);
+        group.scale.set(grow * (1 + sq), grow * (1 - sq), grow * (1 + sq));
+
+        halo1.rotation.z = t * 0.05;
+        halo2.rotation.z = -t * 0.03;
+        glowMat.opacity = 0.42 + 0.12 * Math.sin(t * 1.6);
+
+        for (let i = 0; i < PN; i++) {
+          pY[i] += pSpd[i] * dt;
+          if (pY[i] > 1.6) respawn(i, false);
+          pAng[i] += 0.06 * dt * (i % 2 ? 1 : -1);
+          pPos[i * 3] = Math.cos(pAng[i]) * pRad[i];
+          pPos[i * 3 + 1] = pY[i];
+          pPos[i * 3 + 2] = Math.sin(pAng[i]) * pRad[i];
+        }
+        pGeo.attributes.position.needsUpdate = true;
+
+        renderer.render(scene, camera);
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  /* ================= СТАРТ ================= */
+  drawBackground();
+  window.addEventListener('resize', () => {
+    drawBackground();
+    if (onResize3D) onResize3D();
+  });
+
+  if (window.THREE) {
+    init3D();
+  } else {
+    document.getElementById('notice').hidden = false;
+  }
+
+  // Полосы по краям секций
+  const bandCache = {};
+  document.querySelectorAll('.band').forEach((el) => {
+    const key = el.dataset.band === 'light' ? 'light' : 'dark';
+    if (!bandCache[key]) bandCache[key] = bandURL(PAL[key]);
+    el.style.backgroundImage = 'url(' + bandCache[key] + ')';
+  });
+
+  // Мотивы в карточках и медальонах
+  const MOTIF_FN = { bodom: M.bodom, gul: M.gul, chinor: M.chinor, qochqor: M.qochqor, adras: M.adras, suzani: M.suzani };
+  document.querySelectorAll('[data-motif]').forEach((el) => {
+    el.innerHTML = motifSVG(MOTIF_FN[el.dataset.motif](), PAL[el.dataset.theme || 'card']);
+  });
+
+  // Появление блоков при прокрутке
+  const revealIO = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (en.isIntersecting) {
+        en.target.classList.add('in');
+        revealIO.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => revealIO.observe(el));
+})();
+</script>
+</body>
+</html>
